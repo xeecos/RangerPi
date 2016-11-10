@@ -82,7 +82,18 @@ body {
     background-color: #fff!important;
 }
 
-
+.videoContainer {
+    display:block;
+    position:relative;
+    top: 20px;
+    right: 280px;
+    width:320px;
+    height:240px;
+    background-color:#ffcc00;
+  }
+  #video{
+  	display:none;
+  }
 /*----------------------
   start page
 -----------------------*/
@@ -1012,7 +1023,7 @@ button#showLoaderButton:active {
     background: url(../images/clear.svg) no-repeat center;
     background-size: 40px!important;
   }
-
+  
   #saveBtn {
     width: 50px;
     height: 50px;

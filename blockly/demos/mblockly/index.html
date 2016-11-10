@@ -51,7 +51,7 @@
 <script src="../../blockly-extend/core/toolbox.js"></script>
 <script src="../../blockly-extend/core/workspace_svg.js"></script>
 <script src="../../blockly-extend/core/xml.js"></script>
-
+<script src="js/toblob.min.js"></script>
 <script src="js/mblockly.sliderinput.js"></script>
 <script src="js/mblockly.numpadinput.js"></script>
 <script src="js/mblockly.pianoinput.js"></script>
@@ -146,6 +146,14 @@
                 New Project
             </div>
 
+            <div class="videoContainer">
+                <canvas id="canvas" width="320" height="240" ></canvas>
+                <video id="video"  width="320" height="240" ></video>
+            </div>
+            <script>
+            	
+		
+            </script>
             <!-- <div class="tool-btn" id="stopBtn">
                 <i class="fa fa-stop"></i>
             </div> -->
@@ -278,9 +286,6 @@
     <category name="Begin" class="category_start">
       <block type="start_whengo"></block>
       <block type="start_whenif"></block>
-      <block type="when_shake"></block>
-      <block type="when_receieve_light"></block>
-      <block type="when_obstacle_ahead"></block>
     </category>
 
     <category name="Move" class="category_move">
@@ -299,122 +304,11 @@
                  </block>
             </value>
         </block>
-
-        <block type="move_rotate">
-            <value name="SPEED">
-                <block type="math_number_range" max="255" min="7">
-                    <field name="NUM">100</field>
-                 </block>
-            </value>
-            <value name="TIME">
-                <block type="math_number">
-                    <field name="NUM">1</field>
-                 </block>
-            </value>
-        </block>
-
         <block type="move_stop"></block>
-
-        <block type="move_set_servo_motor">
-            <value name="DEGREE">
-                <block type="math_number">
-                    <field name="NUM">90</field>
-                 </block>
-            </value>
-        </block>
-
     </category>
 
     <category name="Display" class="category_display">
         <block type="set_led_color">
-          <value name="COLOUR1">
-            <block type="colour_picker">
-              <field name="COLOUR">#ff0000</field>
-            </block>
-          </value>
-        </block>
-
-        <block type="play_tone"></block>
-        <block type="stop_tone"></block>
-        <!-- <block type="play_song"></block> -->
-
-        <!-- <block type="text"></block> -->
-        <!-- <block type="text_join"></block> -->
-        <!-- <block type="text_append">
-          <value name="TEXT">
-            <block type="text"></block>
-          </value>
-        </block> -->
-        <!-- <block type="text_length"></block> -->
-        <!-- <block type="text_isEmpty"></block> -->
-        <!-- <block type="text_indexOf">
-          <value name="VALUE">
-            <block type="variables_get">
-              <field name="VAR">text</field>
-            </block>
-          </value>
-        </block> -->
-        <!-- <block type="text_charAt">
-          <value name="VALUE">
-            <block type="variables_get">
-              <field name="VAR">text</field>
-            </block>
-          </value>
-        </block> -->
-        <!-- <block type="text_getSubstring">
-          <value name="STRING">
-            <block type="variables_get">
-              <field name="VAR">text</field>
-            </block>
-          </value>
-        </block> -->
-        <!-- <block type="text_changeCase"></block> -->
-        <!-- <block type="text_trim"></block> -->
-        <!-- <block type="text_print"></block> -->
-        <!-- <block type="text_prompt_ext">
-          <value name="TEXT">
-            <block type="text"></block>
-          </value>
-        </block> -->
-
-        <!-- <block type="colour_picker"></block> -->
-        <!-- <block type="colour_random"></block> -->
-        <!-- <block type="colour_rgb">
-          <value name="RED">
-            <block type="math_number">
-              <field name="NUM">100</field>
-            </block>
-          </value>
-          <value name="GREEN">
-            <block type="math_number">
-              <field name="NUM">50</field>
-            </block>
-          </value>
-          <value name="BLUE">
-            <block type="math_number">
-              <field name="NUM">0</field>
-            </block>
-          </value>
-        </block> -->
-        <!-- <block type="colour_blend">
-          <value name="COLOUR1">
-            <block type="colour_picker">
-              <field name="COLOUR">#ff0000</field>
-            </block>
-          </value>
-          <value name="COLOUR2">
-            <block type="colour_picker">
-              <field name="COLOUR">#3333ff</field>
-            </block>
-          </value>
-          <value name="RATIO">
-            <block type="math_number">
-              <field name="NUM">0.5</field>
-            </block>
-          </value>
-        </block> -->
-
-        <!-- <block type="set_common_led_color">
           <value name="LED_POSITION">
             <block type="math_number_strip_list"></block>
           </value>
@@ -423,35 +317,24 @@
               <field name="COLOUR">#ff0000</field>
             </block>
           </value>
-        </block> -->
-
-        <block type="set_common_led_panel_color">
-          <value name="LED_POSITION">
-            <block type="math_number_list"></block>
-          </value>
-          <value name="COLOUR2">
-            <block type="colour_picker">
-              <field name="COLOUR">#ff0000</field>
-            </block>
-          </value>
         </block>
+
+        <block type="play_tone"></block>
+        <block type="stop_tone"></block>
 
     </category>
 
     <category name="Event" class="category_event">
-        <block type="tablet_shaked"></block>
-        <block type="tablet_tilt_left"></block>
-        <block type="tablet_tilt_right"></block>
-        <block type="tablet_tilt_backward"></block>
-        <block type="tablet_tilt_forward"></block>
+        <block type="when_face_detected"></block>
+        <block type="when_emotion_detected"></block>
         <block type="linefollower_reads"></block>
     </category>
 
     <category name="Detect" class="category_detect">
-      <block type="detect_ultrasonic_threshold"></block>
-      <block type="detect_lightness_threshold"></block>
+      <block type="start_detect_face"></block>
+      <block type="face_status_detected"></block>
+      <block type="emotion_status_detected"></block>
       <block type="detect_ultrasonic"></block>
-      <block type="detect_lightness"></block>
       <block type="detect_common_lightness"></block>
       <block type="detect_common_volume"></block>
     </category>

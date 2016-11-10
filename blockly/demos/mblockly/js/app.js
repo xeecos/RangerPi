@@ -91,6 +91,12 @@ MBlockly.App.onLoad = function(){
                 else if(topBlocks[i].type == 'when_tablet_tilt_right'){
                     registerEvent('when_tablet_tilt_right', topBlocks[i]);
                 }
+                else if(topBlocks[i].type == 'when_face_detected'){
+                    registerEvent('when_face_detected', topBlocks[i]);
+                }
+                else if(topBlocks[i].type == 'when_emotion_detected'){
+                    registerEvent('when_emotion_detected', topBlocks[i]);
+                }
                 else if(topBlocks[i].type == 'when_receieve_light'){
                     registerEvent('when_receieve_light', topBlocks[i]);
                 }

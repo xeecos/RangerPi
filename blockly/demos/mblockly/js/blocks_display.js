@@ -5,36 +5,23 @@ goog.require('MBlockly.PianoInput');
 goog.require('MBlockly.Control');
 
 
-MBlockly.BlockKeeper.makeBlock('set_led_color', ['LED_POSITION', '=COLOUR1'], function(){
+MBlockly.BlockKeeper.makeBlock('set_led_color', ['=LED_POSITION', '=COLOUR2'], function(){
     var iconImages = MBlockly.resources().ICONS;
     var icon = new Blockly.FieldImage(iconImages.DISPLAY_LED_ALL, 30, 30, '*');
 
     this.setColour(MBlockly.BlockKeeper.HUE.display);
-    var ledPositionList = new Blockly.FieldDropdown([
-        [Blockly.Msg.DISPLAY_LED_ALL, 'BOTH'],
-        [Blockly.Msg.DISPLAY_LED_LEFT, 'LEFT'],
-        [Blockly.Msg.DISPLAY_LED_RIGHT, 'RIGHT']
-    ], function() {
-        var selected = event.target.textContent;
-        if (selected == Blockly.Msg.DISPLAY_LED_LEFT) {
-            icon.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-        'xlink:href', iconImages.DISPLAY_LED_LEFT);
-        } else if (selected == Blockly.Msg.DISPLAY_LED_RIGHT) {
-            icon.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-        'xlink:href', iconImages.DISPLAY_LED_RIGHT);
-        } else {
-            icon.imageElement_.setAttributeNS('http://www.w3.org/1999/xlink',
-        'xlink:href', iconImages.DISPLAY_LED_ALL);
-        }
-    });
+
 
     this.appendDummyInput()
         .appendField(icon)
         .appendField(Blockly.Msg.DISPLAY_LED_SET_LED_ON_BOARD)
-        .appendField(ledPositionList, 'LED_POSITION')
-        .appendField(Blockly.Msg.DISPLAY_LED_TO_COLOR);
 
-    this.appendValueInput('COLOUR1')
+    this.appendValueInput('LED_POSITION')
+        .setCheck('Number')
+    
+    this.appendDummyInput().appendField(Blockly.Msg.DISPLAY_LED_TO_COLOR);
+
+    this.appendValueInput('COLOUR2')
         .setCheck('Colour')
         .setAlign(Blockly.ALIGN_RIGHT);
 
@@ -49,8 +36,9 @@ MBlockly.BlockKeeper.makeBlock('set_led_color', ['LED_POSITION', '=COLOUR1'], fu
         colorValue = colorValue.substring(1, colorValue.length-1);
     }
 
+    ledPosition = parseInt(ledPosition);
     var colors = goog.color.hexToRgb(colorValue);
-    MBlockly.Control.setLed(colors[0], colors[1], colors[2], MBlockly.Control.LedPosition[ledPosition]);
+    MBlockly.Control.setLed(colors[0], colors[1], colors[2], ledPosition);
 });
 
 
@@ -165,11 +153,11 @@ MBlockly.BlockKeeper.makeBlock('set_common_led_color', ['=LED_POSITION', 'PORT',
     }
     var colors = goog.color.hexToRgb(colorValue);
     var runtime = this;
-    runtime.pause();
+    //runtime.pause();
     MBlockly.Control.setCommonLedByPosition(colors[0], colors[1], colors[2], ledPosition, port, slot);
-    setTimeout(function(){
-        runtime.resume();
-    }, 50); // 程序等待100ms(在settings.js中设置了全局控制). 这是因为LED灯板是用中断实现的；操纵太快会导致程序异常
+    //setTimeout(function(){
+    //   runtime.resume();
+    //}, 50); // 程序等待100ms(在settings.js中设置了全局控制). 这是因为LED灯板是用中断实现的；操纵太快会导致程序异常
 });
 
 // common led panel 外接灯板，slot固定为2
@@ -214,9 +202,9 @@ MBlockly.BlockKeeper.makeBlock('set_common_led_panel_color', ['=LED_POSITION', '
     }
     var colors = goog.color.hexToRgb(colorValue);
     var runtime = this;
-    runtime.pause();
+    //runtime.pause();
     MBlockly.Control.setCommonLedByPosition(colors[0], colors[1], colors[2], ledPosition, port, slot);
-    setTimeout(function(){
-        runtime.resume();
-    }, 50); // 程序等待100ms(在settings.js中设置了全局控制). 这是因为LED灯板是用中断实现的；操纵太快会导致程序异常
+    //setTimeout(function(){
+    //    runtime.resume();
+    //}, 50); // 程序等待100ms(在settings.js中设置了全局控制). 这是因为LED灯板是用中断实现的；操纵太快会导致程序异常
 });

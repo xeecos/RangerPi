@@ -59,6 +59,27 @@ MBlockly.BlockKeeper.makeBlock('when_button_on_top_pressed', [], function(){
     this.setNextStatement(true);
 }, function(){ });
 
+MBlockly.BlockKeeper.makeBlock('when_face_detected', [], function(){
+    this.setColour(MBlockly.BlockKeeper.HUE.start);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(MBlockly.resources().ICONS.START_BUTTON, 30, 30, '*'))
+        .appendField(Blockly.Msg.EVENT_WHEN_FACE_DETECTED);
+    this.setInputsInline(true);
+    this.setNextStatement(true);
+}, function(){ 
+	console.log("when_face_detected");
+	return MBlockly.Control.faceDetected();
+});
+
+MBlockly.BlockKeeper.makeBlock('when_emotion_detected', [], function(){
+    this.setColour(MBlockly.BlockKeeper.HUE.start);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(MBlockly.resources().ICONS.START_BUTTON, 30, 30, '*'))
+        .appendField(Blockly.Msg.EVENT_WHEN_EMOTION_DETECTED);
+    this.setInputsInline(true);
+    this.setNextStatement(true);
+}, function(){ });
+
 MBlockly.BlockKeeper.makeBlock('tablet_tilt_forward', ['VALUE'], function(){
     this.setColour(MBlockly.BlockKeeper.HUE.event);
 

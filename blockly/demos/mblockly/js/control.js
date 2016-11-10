@@ -127,21 +127,15 @@ MBlockly.Control = {
 MBlockly.Control.ToneHzTable = {
     "C2":65, "D2":73, "E2":82, "F2":87, "G2":98, "A2":110, "B2":123, "C3":131, "D3":147, "E3":165, "F3":175, "G3":196, "A3":220, "B3":247, "C4":262, "D4":294, "E4":330, "F4":349, "G4":392, "A4":440, "B4":494, "C5":523, "D5":587, "E5":658, "F5":698, "G5":784, "A5":880, "B5":988, "C6":1047, "D6":1175, "E6":1319, "F6":1397, "G6":1568, "A6":1760, "B6":1976, "C7":2093, "D7":2349, "E7":2637, "F7":2794, "G7":3136, "A7":3520, "B7":3951, "C8":4186
 };
+const {ipcRenderer} = require('electron')
 
-MBlockly.Control.sendRequest = function(a) {
-    var code = a.join(' ');
-    console.log(code);
-    if(this.bluetoothConnected){
-        //document.location = this.SETTING.protocol + 'type=control&request=' + code;
-    }
-    else{
-        if(this.bleLastTimeConnected){
-            this.sendBleReconnectRequest();
-            this.bleLastTimeConnected = false;
-            this.isMotorMoving = false;
-            throw "BleDisconnected";
-        }
-    }
+ipcRenderer.on('data', (event, data) => {
+    MBlockly.Control.decodeData(data);
+})
+ipcRenderer.send('add-client', 'ping')
+
+MBlockly.Control.sendRequest = function(data) {
+    ipcRenderer.send('data', data.concat([0xa]))
 };
 
 MBlockly.Control.sendBleReconnectRequest = function() {
@@ -232,27 +226,16 @@ MBlockly.Control.buildModuleWriteRGB = function(type, port, slot, index, r, g, b
     var a = new Array(12);
     a[0] = this.SETTING.CODE_COMMON[0];
     a[1] = this.SETTING.CODE_COMMON[1];
-    a[2] = 0x8;
+    a[2] = 0x9;
     a[3] = 0;
     a[4] = this.SETTING.WRITEMODULE;
     a[5] = type;
     a[6] = port;
-    a[7] = index;
-    a[8] = r;
-    a[9] = g;
-    a[10] = b;
-    a[11] = this.SETTING.CODE_COMMON[2];
-
-    // 对于新协议，设置板载LED灯
-    if(this.boardVersionNumber.device == 6){
-        a[2] = 9;
-        a[7] = 2;
-        a[8] = index;
-        a[9] = r;
-        a[10] = g;
-        a[11] = b;
-    }
-
+    a[7] = slot;
+    a[8] = index;
+    a[9] = r;
+    a[10] = g;
+    a[11] = b;
     this.sendRequest(a);
 };
 
@@ -335,7 +318,9 @@ MBlockly.Control.PromiseList.receiveValue = function(index, value){
 }
 
 MBlockly.Control.PromiseList.getType = function(index){
-    return this.requestList[index].type;
+    if(this.requestList[index])
+       return this.requestList[index].type;
+    return 0;
 }
 
 MBlockly.Control.getVersionNumber = function(){
@@ -595,20 +580,12 @@ MBlockly.Control.LedPosition = {
  */
 MBlockly.Control.setLed = function(red, green, blue, position) {
     position = position ? position : 0;
-    var that = this;
-    setTimeout(function() {
-        that.setLedByPosition(red, green, blue, position);
-    }, 100);
-    if(position == 1) {
-        this.setLedByPosition(0, 0, 0, this.LedPosition.RIGHT);
-    } else if(position == 2) {
-        this.setLedByPosition(0, 0, 0, this.LedPosition.LEFT);
-    }
+    this.setLedByPosition(red, green, blue, position);
 };
 
 MBlockly.Control.setLedByPosition = function(red, green, blue, position){
     var type = 8;
-    var port = 7; //RGB端口
+    var port = 0; //RGB端口
     var slot = 1; //???
 
     console.log(position)
@@ -717,7 +694,9 @@ MBlockly.Control.deviceEventList = {    // 这里每个条目都是一个事件�
     when_tablet_tilt_right: [],
     when_obstacle_ahead: [],
     when_receieve_light: [],
-    when_button_on_top_pressed: []
+    when_button_on_top_pressed: [],
+    when_face_detected: [],
+    when_emotion_detected: []
 };
 
 // 如果有像“当前方有障碍”这样的block存在时，
@@ -745,9 +724,9 @@ MBlockly.Control.DeviceEventWatchdog.onTimer = function(){
     }
     else{
         var front = MBlockly.Control.DeviceEventWatchdog.taskQueue.shift();
-        if(MBlockly.Control.bluetoothConnected){
+        //if(MBlockly.Control.bluetoothConnected){
             front[0](front[1]);     // call the real function eg. getLightSensorValue()
-        }
+        //}
     }
 }
 
@@ -755,6 +734,7 @@ MBlockly.Control.DeviceEventWatchdog.onTaskQueueEmpty = function(){
     for(var eventType in MBlockly.Control.deviceEventList){
         var callbackList = MBlockly.Control.deviceEventList[eventType];
         if(callbackList.length>0){
+        
             if(eventType == 'when_receieve_light'){
                 this.taskQueue.push([MBlockly.Control.getLightSensorValue,
                     (function(callbackList){
@@ -885,8 +865,8 @@ function deviceNotify(message){
 }
 
 MBlockly.Control.decodeData = function(data) {
-    var bytes = data.split(" ");
-    console.log('== Received: '+data);
+    var bytes = data;//.split(" ");
+    //console.log('== Received: '+data);
 
     for(var i = 0; i < bytes.length; i++) {
         this.buffer.push(bytes[i]);
@@ -925,7 +905,107 @@ MBlockly.Control.decodeData = function(data) {
         }
     }
 };
+var isVideoOn = false;
+var video,canvas,ctx;  
+function videoLoop(){
+	if(isVideoOn){
+		ctx.drawImage(video, 0, 0, 320, 240); 
+	}
+	setTimeout(videoLoop,50);
+}
+$(document).ready(function(){
+	console.log("ready");
+	video=document.getElementById('video');
+	canvas=document.getElementById('canvas');  
+	ctx=canvas.getContext('2d'); 
+	navigator.getUserMedia  = navigator.getUserMedia ||  
+          navigator.webkitGetUserMedia ||  
+          navigator.mozGetUserMedia ||  
+          navigator.msGetUserMedia;  
+	navigator.getUserMedia({
+	video:{
+		mandatory: {
+	        	maxHeight: 240,
+	        	maxWidth: 320
+			}
+	}}, success, noStream); 
+})
+function success(stream){
+	video.src=URL.createObjectURL(stream);  
+	video.onerror = function () {  
+		stream.stop();  
+	};  
+	stream.onended = noStream;  
+	video.onloadedmetadata = function () {  
+		isVideoOn = true;  
+		setTimeout(videoLoop,50);
+	};  
+}  
+function noStream(err) {  
+	console.log(err);  
+	isVideoOn = false;
+}  
+function dataURLtoBlob(dataurl) {
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type:mime});
+}
+var isFaceDetected = false;
+var lastAge = 0;
+MBlockly.Control.faceDetected = function(){
 
+	var status = isFaceDetected;
+	isFaceDetected = false;
+	return status;
+}
+MBlockly.Control.faceAge = function(){
+	return lastAge;
+}
+MBlockly.Control.requestFace = function(){
+	var url = "https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=true&returnFaceLandmarks=true&returnFaceAttributes=age,smile";
+	
+	var runListenerList = function(listenerList){
+	        for(var i=0;i<listenerList.length;i++){
+	            listenerList[i]();
+	        }
+    	};
+	if (canvas.toBlob) {
+	    canvas.toBlob(
+	        function (blob) {
+	            $.ajax({
+	                    url: url,
+	                    type: "POST",
+	                    data:blob,
+			    contentType: false,   
+		            processData: false,    
+	                    beforeSend: function(request) {
+	                        request.setRequestHeader("Content-Type", "application/octet-stream");
+	                        request.setRequestHeader("Ocp-Apim-Subscription-Key", "0a0235609d234f19a454243e3a87a450");
+	                    },
+	                    success: function(result) {
+	                        console.log(result);
+	                        if(result.length>0){
+	                        	isFaceDetected = true;
+	                        	lastAge = result[0].faceAttributes.age;
+        				runListenerList(MBlockly.Control.deviceEventList.when_face_detected);
+	                        }
+	                    }
+                	});
+	        },
+	        'image/jpeg'
+	    );
+	}
+}
+//
+/*
+
+	req.requestHeaders.push(new URLRequestHeader("Content-Type","application/octet-stream"));
+	req.requestHeaders.push(new URLRequestHeader("Ocp-Apim-Subscription-Key","0a0235609d234f19a454243e3a87a450"));
+	//emotion 9c0c233835a9473bb65440af525edcbf
+		*/
 
 /* 解析从小车返回的字节数据 */
 MBlockly.Control.getResponseValue = function(b1, b2, b3, b4) {

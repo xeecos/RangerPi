@@ -151,3 +151,70 @@ MBlockly.BlockKeeper.makeBlock('detect_common_volume', ['PORT'], function(){
     });
     return val;
 }, Blockly.JavaScript.ORDER_FUNCTION_CALL);
+
+MBlockly.BlockKeeper.makeBlock('start_detect_face', ['face_type'], function(){
+    var iconImages = MBlockly.resources().ICONS;
+    var icon = new Blockly.FieldImage(iconImages.MOVE_TURN_LEFT, 30, 30, '*');
+
+    this.setColour(MBlockly.BlockKeeper.HUE.move);
+    var dropdown = new Blockly.FieldDropdown([
+            [Blockly.Msg.FACE_TYPE, 'face'],
+            [Blockly.Msg.EMOTION_TYPE, 'emotion']
+        ], function(newValue) {
+    });
+
+        this.appendDummyInput()
+	    .appendField(icon)
+            .appendField(Blockly.Msg.START_DETECT_FACE)
+            .appendField(dropdown, 'face_type')
+        this.setInputsInline(true);
+        this.setNextStatement(true);
+        this.setPreviousStatement(true);
+
+}, function(type){
+	if(type=="face"){
+		MBlockly.Control.requestFace();
+	}
+});
+
+MBlockly.BlockKeeper.makeBlock('face_status_detected', ['_face_type'], function(){
+    var status = new Blockly.FieldDropdown([
+            ["age", "Age"],
+            ["smile", "Smile"]
+        ]);
+
+    this.setColour(MBlockly.BlockKeeper.HUE.detect);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(MBlockly.resources().ICONS.EVENT_SOUND, 30,30, '*'))
+        .appendField(Blockly.Msg.FACE_STATUS)
+        .appendField(status, '_face_type');
+    this.setInputsInline(true);
+    this.setOutput(true, 'Number');
+    this.setNextStatement(false);
+    this.setPreviousStatement(false);
+}, function(status){
+    var val = MBlockly.Control["face"+status]();
+    return val;
+}, Blockly.JavaScript.ORDER_FUNCTION_CALL);
+
+
+MBlockly.BlockKeeper.makeBlock('emotion_status_detected', ['emotion_status'], function(){
+    var status = new Blockly.FieldDropdown([
+            ["happiness", "happiness"],
+            ["sadness", "sadness"],
+            ["superise", "superise"]
+        ]);
+
+    this.setColour(MBlockly.BlockKeeper.HUE.detect);
+    this.appendDummyInput()
+        .appendField(new Blockly.FieldImage(MBlockly.resources().ICONS.EVENT_SOUND, 30,30, '*'))
+        .appendField(Blockly.Msg.EMOTION_STATUS)
+        .appendField(status, 'emotion_status');
+    this.setInputsInline(true);
+    this.setOutput(true, 'Number');
+    this.setNextStatement(false);
+    this.setPreviousStatement(false);
+}, function(portStr){
+    var val = 0
+    return val;
+}, Blockly.JavaScript.ORDER_FUNCTION_CALL);
