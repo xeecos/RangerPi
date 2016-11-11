@@ -103,7 +103,38 @@ MBlockly.BlockKeeper.makeBlock('play_song', ['TONG_SONG'], function(){
     var index = parseInt(songName.toString().split('_')[1]);
     MBlockly.Action.playSong(songList[index].data);
 });
+MBlockly.BlockKeeper.makeBlock('set_sevseg', ['PORT', '=NUM'], function(){
+    var iconImages = MBlockly.resources().ICONS;
+    var icon = new Blockly.FieldImage(iconImages.DISPLAY_LED_ALL, 30, 30, '*');
 
+    this.setColour(MBlockly.BlockKeeper.HUE.display);
+
+    var port = new Blockly.FieldDropdown([
+            [Blockly.Msg.PORT + "6", "PORT-6"],
+            [Blockly.Msg.PORT + "7", "PORT-7"],
+            [Blockly.Msg.PORT + "8", "PORT-8"],
+            [Blockly.Msg.PORT + "9", "PORT-9"],
+            [Blockly.Msg.PORT + "10", "PORT-10"]
+        ]);
+
+
+    this.appendDummyInput()
+        .appendField(icon)
+        .appendField("set 7-seg display")
+        .appendField(port, 'PORT');
+
+    this.appendValueInput('NUM')
+        .setCheck('Number')
+        .setAlign(Blockly.ALIGN_RIGHT);
+
+    this.setInputsInline(true);
+    this.setOutput(false);
+    this.setNextStatement(true);
+    this.setPreviousStatement(true);
+}, function( portStr,  num){
+    var port = parseInt(portStr.data.split('PORT-')[1]);
+    MBlockly.Control.setSevSeg(port, num);
+});
 // common led
 MBlockly.BlockKeeper.makeBlock('set_common_led_color', ['=LED_POSITION', 'PORT', 'SLOT', '=COLOUR2'], function(){
     var iconImages = MBlockly.resources().ICONS;

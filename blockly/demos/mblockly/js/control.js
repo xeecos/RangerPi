@@ -66,6 +66,7 @@ MBlockly.Control = {
         DEV_PINANALOG: 31,
         DEV_PINPWM: 32,
         DEV_PINANGLE: 33,
+        DEV_RANGER_MOTOR:0x3d,
         TONE: 34,
 
         SLOT_1: 1, //0
@@ -169,18 +170,35 @@ MBlockly.Control.buildModuleWriteShort = function(type, port, slot, value) {
     var a = new Array(10);
     a[0] = this.SETTING.CODE_COMMON[0];
     a[1] = this.SETTING.CODE_COMMON[1];
-    a[2] = 0x6;
+    a[2] = 0x8;
     a[3] = 0;
     a[4] = this.SETTING.WRITEMODULE;
     a[5] = type;
     a[6] = port;
-    a[7] = value&0xff;
-    a[8] = (value>>8)&0xff;
-    a[9] = this.SETTING.CODE_COMMON[2];
+    a[7] = slot;
+    a[8] = value&0xff;
+    a[9] = (value>>8)&0xff;
     // return a;
     this.sendRequest(a);
 };
 
+MBlockly.Control.buildModuleWriteFloat = function(type, port, value) {
+    var a = new Array(12);
+    a[0] = this.SETTING.CODE_COMMON[0];
+    a[1] = this.SETTING.CODE_COMMON[1];
+    a[2] = 0x9;
+    a[3] = 0;
+    a[4] = this.SETTING.WRITEMODULE;
+    a[5] = type;
+    a[6] = port;
+    var bytes = this.floatToBytes(value);
+    a[7] = bytes[0];
+    a[8] = bytes[1];
+    a[9] = bytes[2];
+    a[10] = bytes[3];
+    a[11] = this.SETTING.CODE_COMMON[2];
+    this.sendRequest(a);
+};
 
 /**
  * build write code
@@ -468,16 +486,16 @@ MBlockly.Control.lightSensor_callback = function() {
 
 //------- 顶端按钮回调执行 ---------
 MBlockly.Control.onTopButton_callback = function() {
-    console.log('--ontopbutton callback: '+this.buffer.join(','));
+    //console.log('--ontopbutton callback: '+this.buffer.join(','));
 
     if(this.buffer[0] == 0xff && this.buffer[1] == 0x55) {
-        if(this.buffer[6] == 0){
+        if(this.buffer[4] == 0){
             pressed = 1;
         }
         else{
             pressed = 0;
         }
-        console.log('pressed: '+this.buffer[6]);
+        console.log('pressed: '+this.buffer[4]);
         MBlockly.Control.PromiseList.receiveValue(this.buffer[this.SETTING.READ_BYTES_INDEX], pressed);
     } else {
         this.out('end');
@@ -544,8 +562,8 @@ MBlockly.Control.lightSensor = function(slot, index) {
 };
 
 MBlockly.Control.onTopButton = function(slot, index){
-    var type = this.SETTING.DEV_TOPBUTTON;
-    var port = this.SETTING.PORT_TOPBUTTON;
+    var type = 0x16;//this.SETTING.DEV_TOPBUTTON;
+    var port = 0x6;//this.SETTING.PORT_TOPBUTTON;
     this.buildModuleRead(type, port, slot, index);
 }
 
@@ -561,9 +579,9 @@ MBlockly.Control.setSpeed = function(leftSpeed, rightSpeed) {
     else{
         this.isMotorMoving = false;
     }
-    this.buildModuleWriteShort(this.SETTING.DEV_DCMOTOR, this.SETTING.PORT_M1, this.SETTING.SLOT_1, leftSpeed);
+    that.buildModuleWriteShort(that.SETTING.DEV_RANGER_MOTOR, 0, that.SETTING.SLOT_1, leftSpeed);
     setTimeout(function() {
-       that.buildModuleWriteShort(that.SETTING.DEV_DCMOTOR, that.SETTING.PORT_M2, that.SETTING.SLOT_1, rightSpeed);
+       that.buildModuleWriteShort(that.SETTING.DEV_RANGER_MOTOR, 0, that.SETTING.SLOT_2, rightSpeed);
     }, 100);
 };
 
@@ -867,13 +885,17 @@ function deviceNotify(message){
 MBlockly.Control.decodeData = function(data) {
     var bytes = data;//.split(" ");
     //console.log('== Received: '+data);
-
+    var length = this.buffer.length;
+	if(length > 28) {
+                 this.buffer = [];
+            } 
     for(var i = 0; i < bytes.length; i++) {
         this.buffer.push(bytes[i]);
-        var length = this.buffer.length;
+        length = this.buffer.length;
+            
         if(length>1 && this.buffer[length-2] == this.SETTING.READ_CHUNK_SUFFIX[0] &&
                   this.buffer[length-1] == this.SETTING.READ_CHUNK_SUFFIX[1]) {
-            if(this.buffer.length < 10) {
+            if(length < 5) {
                 // this.buffer = [];
             } else {
                 var dataIndex = this.buffer[this.SETTING.READ_BYTES_INDEX];
@@ -955,6 +977,7 @@ function dataURLtoBlob(dataurl) {
 }
 var isFaceDetected = false;
 var lastAge = 0;
+var lastSmile = 0;
 MBlockly.Control.faceDetected = function(){
 
 	var status = isFaceDetected;
@@ -963,6 +986,9 @@ MBlockly.Control.faceDetected = function(){
 }
 MBlockly.Control.faceAge = function(){
 	return lastAge;
+}
+MBlockly.Control.faceSmile = function(){
+	return lastSmile;
 }
 MBlockly.Control.requestFace = function(){
 	var url = "https://api.projectoxford.ai/face/v1.0/detect?returnFaceId=true&returnFaceLandmarks=true&returnFaceAttributes=age,smile";
@@ -990,6 +1016,7 @@ MBlockly.Control.requestFace = function(){
 	                        if(result.length>0){
 	                        	isFaceDetected = true;
 	                        	lastAge = result[0].faceAttributes.age;
+	                        	lastSmile = result[0].faceAttributes.smile;
         				runListenerList(MBlockly.Control.deviceEventList.when_face_detected);
 	                        }
 	                    }
@@ -998,6 +1025,11 @@ MBlockly.Control.requestFace = function(){
 	        'image/jpeg'
 	    );
 	}
+}
+MBlockly.Control.setSevSeg = function(port,num){
+	console.log("setSevSeg");
+	var type = 0x9
+	this.buildModuleWriteFloat(type,port,num);
 }
 //
 /*
@@ -1029,7 +1061,13 @@ MBlockly.Control.intBitsToFloat = function(num) {
     ( num & 0x7fffff ) | 0x800000;
     return s * m * Math.pow( 2, e - 150 );
 };
-
+MBlockly.Control.floatToBytes = function(num){
+    var buffer = new ArrayBuffer(4);
+    var floatView = new Float32Array(buffer);
+    var intView = new Uint8Array(buffer);
+    floatView[0] = num;
+    return [intView[0],intView[1],intView[2],intView[3]];   
+}
 MBlockly.Control.out = function(msg) {
     var s = $('#log').html() + '<br>' + msg;
     $('#log').html(s);

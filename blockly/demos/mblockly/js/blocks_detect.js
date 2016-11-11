@@ -200,9 +200,9 @@ MBlockly.BlockKeeper.makeBlock('face_status_detected', ['_face_type'], function(
 
 MBlockly.BlockKeeper.makeBlock('emotion_status_detected', ['emotion_status'], function(){
     var status = new Blockly.FieldDropdown([
-            ["happiness", "happiness"],
-            ["sadness", "sadness"],
-            ["superise", "superise"]
+            ["happiness", "Happiness"],
+            ["sadness", "Sadness"],
+            ["superise", "Superise"]
         ]);
 
     this.setColour(MBlockly.BlockKeeper.HUE.detect);

@@ -319,6 +319,12 @@
           </value>
         </block>
 
+        <block type="set_sevseg">
+            <value name="NUM">
+                <block type="math_number_range" max="255" min="7">
+                    <field name="NUM">100</field>
+                 </block>
+            </value></block>
         <block type="play_tone"></block>
         <block type="stop_tone"></block>
 
@@ -327,6 +333,7 @@
     <category name="Event" class="category_event">
         <block type="when_face_detected"></block>
         <block type="when_emotion_detected"></block>
+        <block type="when_button_on_top_pressed"></block>
         <block type="linefollower_reads"></block>
     </category>
 
